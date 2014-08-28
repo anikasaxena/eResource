@@ -1,0 +1,78 @@
+        /// <summary>
+        /// Generates and returns a DataTable containg data from excel sheet.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public System.Data.DataTable Import(String path)
+        {
+            Microsoft.Office.Interop.Excel.Application app = null; // Holds an instance of Excel application. 
+            Microsoft.Office.Interop.Excel.Workbook workBook = null; // Represents a workbook in Excel.
+            Microsoft.Office.Interop.Excel.Worksheet workSheet = null; // Represents a worksheet in Excel.
+            System.Data.DataTable dt = new System.Data.DataTable();
+            try
+            {
+                app = new Microsoft.Office.Interop.Excel.Application(); // Initializes Excel application as a com Component.
+                //Opens a work book by given path.
+                workBook = app.Workbooks.Open(path, 0, true, 5, "", "", true, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t", false, false, 0, true, 1, 0);
+                //Gets the active worksheet from this path.
+                workSheet = (Microsoft.Office.Interop.Excel.Worksheet)workBook.ActiveSheet;
+                int index = 12;  // Index of row to start from.
+                
+                for (int i = 1; i < 15; i++) //Add all requried columns form excel sheet.
+                {
+                    dt.Columns.Add();
+                }
+                DataRow row;
+                try
+                {
+                    //Loop through all filled rows in excel sheet (until it finds a null value in first column).
+                    while (((Microsoft.Office.Interop.Excel.Range)workSheet.Cells[index, 1]).Value2 != null) 
+                    {
+                        index++;
+                        row = dt.NewRow(); // creates a new instance of data row to be added in DataTable
+                        object[,] valuesofrow = (object[,])workSheet.get_Range("A" + index, "N" + index).Value2;
+
+                        for (int i = 1; i < 15; i++) 
+                        {
+                            row[i - 1] = valuesofrow[1, i]; // Assigns all column value for this row instance.
+                        }
+                        dt.Rows.Add(row); // Adds the row to main table which it belongs to.
+                    }
+                }
+                catch (Exception ex)
+                {
+                   
+                    MessageBox.Show(ex.Message);
+                }
+                app.Workbooks.Close(); // Close the workbook on completion.
+                app.Quit(); // Exits excel applitcation.
+            }
+            catch (Exception ex)
+            {                
+                MessageBox.Show(ex.Message);
+            }
+            finally // releases all object and and memory of com objects..
+            {
+                ReleaseObject(app);
+                ReleaseObject(workBook);
+                ReleaseObject(workSheet);
+            }
+            return dt; 
+        }
+        public static void ReleaseObject(object obj)
+        {
+            try
+            {
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(obj);
+                obj = null;
+            }
+            catch (Exception ex)
+            {
+                obj = null;               
+                MessageBox.Show(ex.Message.ToString());
+            }
+            finally
+            {
+                GC.Collect();
+            }
+        }
